@@ -7,6 +7,7 @@ import (
 	"log/slog"
 	"net/http"
 	"os"
+	"path/filepath"
 	"time"
 
 	"github.com/CDN18/femoji-cli/internal/auth"
@@ -55,7 +56,8 @@ func Download(authClient *auth.Client, instance string, override bool) error {
 			}
 		}
 		// download emoji
-		filePath := fmt.Sprintf("%s/%s", dir, emoji.Shortcode)
+		extension := filepath.Ext(emoji.URL)
+		filePath := fmt.Sprintf("%s/%s%s", dir, emoji.Shortcode, extension)
 		if _, err := os.Stat(filePath); err == nil && !override {
 			slog.Info("skipping download as it already exists", "emoji", emoji.Shortcode, "path", filePath)
 			continue
@@ -78,6 +80,16 @@ func Download(authClient *auth.Client, instance string, override bool) error {
 		if resp.StatusCode != http.StatusOK {
 			slog.Error("failed to download emoji", "status", resp.StatusCode, "emoji", emoji.Shortcode, "url", emoji.URL)
 			continue
+		}
+		file, err := os.Create(filePath)
+		if err != nil {
+			slog.Error("failed to create file", "error", err, "emoji", emoji.Shortcode, "path", filePath)
+			return err
+		}
+		defer file.Close()
+		if _, err := io.Copy(file, resp.Body); err != nil {
+			slog.Error("failed to write to file", "error", err, "emoji", emoji.Shortcode, "path", filePath)
+			return err
 		}
 		// check x-ratelimit-remaining and x-ratelimit-reset headers
 		if resp.Header.Get("x-ratelimit-remaining") == "0" {
