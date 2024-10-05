@@ -64,7 +64,8 @@ func Upload(authClient *auth.Client, path, category string, override bool) error
 				)
 				if err != nil {
 					slog.Error("Error overriding", "file", file.Name(), "error", err)
-					return err
+					// continue to next file
+					continue
 				} else {
 					slog.Info("Skipping", file.Name(), "as it already exists")
 					continue
@@ -84,7 +85,8 @@ func Upload(authClient *auth.Client, path, category string, override bool) error
 			)
 			if err != nil {
 				slog.Error("Error uploading", "file", file.Name(), "error", err)
-				return err
+				// continue to next file
+				continue
 			}
 		}
 	}
