@@ -8,15 +8,20 @@ import (
 )
 
 var uploadCmd = &cobra.Command{
-	Use:   "upload <path> <category>",
+	Use:   "upload <path> [category]",
 	Short: "Upload emojis from a directory",
-	Args:  cobra.ExactArgs(2),
+	Args:  cobra.RangeArgs(1, 2),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		authClient, err := auth.NewAuthClient(User)
 		if err != nil {
 			return err
 		}
-		return upload.Upload(authClient, args[0], args[1], override)
+		path := args[0]
+		category := "uncategorized"
+		if len(args) == 2 {
+			category = args[1]
+		}
+		return upload.Upload(authClient, path, category, override)
 	},
 }
 

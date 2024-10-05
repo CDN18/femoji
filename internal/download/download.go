@@ -17,6 +17,9 @@ func Download(authClient *auth.Client, instance string, override bool) error {
 	}
 	emojis := emojiResp.GetPayload()
 	for _, emoji := range emojis {
+		if emoji.Category == "" {
+			emoji.Category = "uncategorized"
+		}
 		dir := fmt.Sprintf("%s/%s", instance, emoji.Category)
 		// create dir if not exists
 		if _, err := os.Stat(dir); os.IsNotExist(err) {
