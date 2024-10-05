@@ -5,7 +5,6 @@ import (
 
 	"github.com/CDN18/femoji-cli/internal/auth"
 	"github.com/CDN18/femoji-cli/internal/download"
-	"github.com/CDN18/femoji-cli/internal/util"
 )
 
 var downloadCmd = &cobra.Command{
@@ -18,10 +17,7 @@ var downloadCmd = &cobra.Command{
 			return err
 		}
 
-		instance, err := util.GetUserInstance(User)
-		if err != nil {
-			return err
-		}
+		instance := "DEFAULT"
 		if len(args) > 0 {
 			instance = args[0]
 		}

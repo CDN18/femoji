@@ -1,21 +1,46 @@
 package download
 
 import (
+	"encoding/json"
 	"fmt"
+	"io"
 	"log/slog"
 	"net/http"
 	"os"
 	"time"
 
 	"github.com/CDN18/femoji-cli/internal/auth"
+	"github.com/owu-one/gotosocial-sdk/models"
 )
 
 func Download(authClient *auth.Client, instance string, override bool) error {
-	emojiResp, err := authClient.Client.CustomEmojis.CustomEmojisGet(nil, authClient.Auth)
-	if err != nil {
-		return err
+	var emojis []*models.Emoji
+	if instance == "DEFAULT" {
+		emojiResp, err := authClient.Client.CustomEmojis.CustomEmojisGet(nil, authClient.Auth)
+		if err != nil {
+			return err
+		}
+		emojis = emojiResp.GetPayload()
+	} else {
+		endpoint := fmt.Sprintf("%s/api/v1/custom_emojis", instance)
+		resp, err := http.Get(endpoint)
+		if err != nil {
+			return err
+		}
+		defer resp.Body.Close()
+		if resp.StatusCode != http.StatusOK {
+			slog.Error("failed to get custom emojis", "status", resp.StatusCode, "instance", instance)
+			return nil
+		}
+		body, err := io.ReadAll(resp.Body)
+		if err != nil {
+			return err
+		}
+		if err := json.Unmarshal(body, &emojis); err != nil {
+			return err
+		}
 	}
-	emojis := emojiResp.GetPayload()
+
 	for _, emoji := range emojis {
 		if emoji.Category == "" {
 			emoji.Category = "uncategorized"
