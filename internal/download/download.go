@@ -22,7 +22,7 @@ func Download(authClient *auth.Client, instance string, override bool) error {
 		}
 		emojis = emojiResp.GetPayload()
 	} else {
-		endpoint := fmt.Sprintf("%s/api/v1/custom_emojis", instance)
+		endpoint := fmt.Sprintf("https://%s/api/v1/custom_emojis", instance)
 		resp, err := http.Get(endpoint)
 		if err != nil {
 			return err
@@ -41,10 +41,12 @@ func Download(authClient *auth.Client, instance string, override bool) error {
 		}
 	}
 
+	slog.Info("Emoji List Retrieved", "count", len(emojis))
 	for _, emoji := range emojis {
 		if emoji.Category == "" {
 			emoji.Category = "uncategorized"
 		}
+		slog.Info("downloading emoji", "emoji", emoji.Shortcode, "category", emoji.Category, "url", emoji.URL)
 		dir := fmt.Sprintf("%s/%s", instance, emoji.Category)
 		// create dir if not exists
 		if _, err := os.Stat(dir); os.IsNotExist(err) {
@@ -55,14 +57,22 @@ func Download(authClient *auth.Client, instance string, override bool) error {
 		// download emoji
 		filePath := fmt.Sprintf("%s/%s", dir, emoji.Shortcode)
 		if _, err := os.Stat(filePath); err == nil && !override {
-			slog.Info("skipping download as it already exists", "emoji", emoji.Shortcode)
+			slog.Info("skipping download as it already exists", "emoji", emoji.Shortcode, "path", filePath)
 			continue
 		}
-		// fetch emoji.URL to filePath (directly download) , check x-ratelimit-remaining and x-ratelimit-reset headers
 		resp, err := http.Get(emoji.URL)
 		if err != nil {
 			slog.Error("failed to download emoji", "error", err, "emoji", emoji.Shortcode, "url", emoji.URL)
 			continue
+		}
+		// follow 3xx redirects
+		if resp.StatusCode >= 300 && resp.StatusCode < 400 {
+			redirectURL := resp.Header.Get("Location")
+			resp, err = http.Get(redirectURL)
+			if err != nil {
+				slog.Error("failed to follow redirect", "error", err, "url", redirectURL)
+				continue
+			}
 		}
 		defer resp.Body.Close()
 		if resp.StatusCode != http.StatusOK {
