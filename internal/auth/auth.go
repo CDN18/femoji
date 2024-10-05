@@ -80,7 +80,7 @@ const (
 
 const (
 	oauthRedirect = "urn:ietf:wg:oauth:2.0:oob"
-	oauthScopes   = "read write"
+	oauthScopes   = "read write admin"
 )
 
 // Login authenticates the user and saves the credentials in the system keychain.
