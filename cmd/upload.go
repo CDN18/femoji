@@ -7,10 +7,6 @@ import (
 	"github.com/CDN18/femoji-cli/internal/upload"
 )
 
-var (
-	override bool
-)
-
 var uploadCmd = &cobra.Command{
 	Use:   "upload <path> <category>",
 	Short: "Upload emojis from a directory",
