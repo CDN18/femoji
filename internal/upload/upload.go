@@ -67,7 +67,7 @@ func Upload(authClient *auth.Client, path, category string, override bool) error
 					// continue to next file
 					continue
 				} else {
-					slog.Info("Skipping", file.Name(), "as it already exists")
+					slog.Info("Skipping", file.Name(), "as it already exists, to override set --override flag")
 					continue
 				}
 			}
