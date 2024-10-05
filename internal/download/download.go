@@ -11,10 +11,11 @@ import (
 	"time"
 
 	"github.com/CDN18/femoji-cli/internal/auth"
+	"github.com/CDN18/femoji-cli/internal/util"
 	"github.com/owu-one/gotosocial-sdk/models"
 )
 
-func Download(authClient *auth.Client, instance string, override bool) error {
+func Download(authClient *auth.Client, instance string, category string, override bool) error {
 	var emojis []*models.Emoji
 	if instance == "DEFAULT" {
 		emojiResp, err := authClient.Client.CustomEmojis.CustomEmojisGet(nil, authClient.Auth)
@@ -40,6 +41,9 @@ func Download(authClient *auth.Client, instance string, override bool) error {
 		if err := json.Unmarshal(body, &emojis); err != nil {
 			return err
 		}
+	}
+	if category != "*" {
+		emojis, _ = util.FilterEmojisByCategory(emojis, category)
 	}
 
 	slog.Info("Emoji List Retrieved", "count", len(emojis))

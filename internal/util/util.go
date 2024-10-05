@@ -19,9 +19,19 @@ func IsImage(name string) bool {
 	return false
 }
 
-func FilterEmojisByCategory(emojis *admin.EmojisGetOK, category string) ([]*models.AdminEmoji, error) {
+func FilterAdminEmojisByCategory(emojis *admin.EmojisGetOK, category string) ([]*models.AdminEmoji, error) {
 	var filtered []*models.AdminEmoji
 	for _, emoji := range emojis.Payload {
+		if emoji.Category == category {
+			filtered = append(filtered, emoji)
+		}
+	}
+	return filtered, nil
+}
+
+func FilterEmojisByCategory(emojis []*models.Emoji, category string) ([]*models.Emoji, error) {
+	var filtered []*models.Emoji
+	for _, emoji := range emojis {
 		if emoji.Category == category {
 			filtered = append(filtered, emoji)
 		}

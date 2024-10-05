@@ -23,7 +23,7 @@ func Upload(authClient *auth.Client, path, category string, override bool) error
 		return err
 	}
 	// filter emojis by category
-	currEmojis, err := util.FilterEmojisByCategory(emojis, category)
+	currEmojis, err := util.FilterAdminEmojisByCategory(emojis, category)
 	if err != nil {
 		return err
 	}

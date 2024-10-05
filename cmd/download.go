@@ -8,9 +8,9 @@ import (
 )
 
 var downloadCmd = &cobra.Command{
-	Use:   "download [instance]",
+	Use:   "download [instance] [category]",
 	Short: "Download emojis from an instance",
-	Args:  cobra.MaximumNArgs(1),
+	Args:  cobra.MaximumNArgs(2),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		authClient, err := auth.NewAuthClient(User)
 		if err != nil {
@@ -21,8 +21,12 @@ var downloadCmd = &cobra.Command{
 		if len(args) > 0 {
 			instance = args[0]
 		}
+		category := "*"
+		if len(args) > 1 {
+			category = args[1]
+		}
 
-		return download.Download(authClient, instance, override)
+		return download.Download(authClient, instance, category, override)
 	},
 }
 
