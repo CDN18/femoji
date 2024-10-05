@@ -7,8 +7,9 @@ import (
 )
 
 var rootCmd = &cobra.Command{
-	Use:   "femoji",
-	Short: "Femoji is a tool for managing custom emojis on Fediverse instances",
+	Use:     "femoji",
+	Short:   "Femoji is a tool for managing custom emojis on Fediverse instances",
+	Version: Version,
 }
 
 var User string
