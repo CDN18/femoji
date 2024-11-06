@@ -7,8 +7,6 @@ import (
 	"github.com/CDN18/femoji-cli/internal/download"
 )
 
-var instanceType string
-
 var downloadCmd = &cobra.Command{
 	Use:   "download [instance] [category] --software mastodon|misskey",
 	Short: "Download emojis from an instance",
@@ -28,7 +26,7 @@ var downloadCmd = &cobra.Command{
 			category = args[1]
 		}
 
-		return download.Download(authClient, instance, category, override, instanceType)
+		return download.Download(authClient, instance, category, override, instanceType, multithread)
 	},
 }
 
@@ -36,4 +34,5 @@ func init() {
 	rootCmd.AddCommand(downloadCmd)
 	downloadCmd.Flags().BoolVar(&override, "override", false, "Override existing files when downloading")
 	downloadCmd.Flags().StringVar(&instanceType, "software", "mastodon", "Instance type (mastodon or misskey)")
+	downloadCmd.Flags().IntVar(&multithread, "multithread", 0, "Enable multi-threaded download with specified number of threads (default: number of CPU cores)")
 }

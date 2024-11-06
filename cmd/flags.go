@@ -1,5 +1,7 @@
 package cmd
 
 var (
-	override bool
+	override     bool
+	instanceType string
+	multithread  int
 )
