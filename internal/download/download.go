@@ -134,11 +134,14 @@ func Download(authClient *auth.Client, instance string, category string, overrid
 	}
 
 	slog.Info("Emoji List Retrieved", "count", len(emojis))
+	totalCount := len(emojis)
+	downloadedCount := 0
 	for _, emoji := range emojis {
+		downloadedCount++
 		if emoji.Category == "" {
 			emoji.Category = "uncategorized"
 		}
-		slog.Info("downloading emoji", "shortcode", emoji.Shortcode, "category", emoji.Category, "url", emoji.URL)
+		slog.Info(fmt.Sprintf("downloading emoji %d/%d", downloadedCount, totalCount), "shortcode", emoji.Shortcode, "category", emoji.Category, "url", emoji.URL)
 		dir := fmt.Sprintf("%s/%s", instance, emoji.Category)
 		// create dir if not exists
 		if _, err := os.Stat(dir); os.IsNotExist(err) {
@@ -208,5 +211,6 @@ func Download(authClient *auth.Client, instance string, category string, overrid
 			time.Sleep(time.Until(resetTime))
 		}
 	}
+	slog.Info(fmt.Sprintf("Completed! Downloaded %d emojis", downloadedCount))
 	return nil
 }
