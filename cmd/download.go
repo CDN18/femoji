@@ -26,7 +26,7 @@ var downloadCmd = &cobra.Command{
 			category = args[1]
 		}
 
-		return download.Download(authClient, instance, category, override, instanceType, multithread)
+		return download.Download(authClient, instance, category, override, instanceType, multithread, saveIndex)
 	},
 }
 
@@ -35,4 +35,5 @@ func init() {
 	downloadCmd.Flags().BoolVar(&override, "override", false, "Override existing files when downloading")
 	downloadCmd.Flags().StringVar(&instanceType, "software", "mastodon", "Instance type (mastodon or misskey)")
 	downloadCmd.Flags().IntVar(&multithread, "multithread", 0, "Enable multi-threaded download with specified number of threads (default: number of CPU cores)")
+	downloadCmd.Flags().BoolVar(&saveIndex, "save-index", false, "Save server response as index.json")
 }

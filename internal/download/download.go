@@ -108,7 +108,7 @@ func downloadWorker(id int, jobs <-chan *models.Emoji, wg *sync.WaitGroup, insta
 	}
 }
 
-func Download(authClient *auth.Client, instance string, category string, override bool, instanceType string, threadCount int) error {
+func Download(authClient *auth.Client, instance string, category string, override bool, instanceType string, threadCount int, saveIndex bool) error {
 	if instance != "DEFAULT" {
 		if instanceType == "mastodon" {
 			nodeinfo, err := util.GetNodeInfo(instance)
@@ -309,6 +309,30 @@ func Download(authClient *auth.Client, instance string, category string, overrid
 			}
 		}
 	}
+
+	if saveIndex {
+		if _, err := os.Stat(instance); os.IsNotExist(err) {
+			if err := os.MkdirAll(instance, 0o755); err != nil {
+				slog.Error("failed to create instance directory", "error", err)
+				return err
+			}
+		}
+		f, err := os.Create(filepath.Join(instance, "index.json"))
+		if err != nil {
+			slog.Error("failed to create index.json", "error", err)
+			return err
+		}
+		defer f.Close()
+
+		encoder := json.NewEncoder(f)
+		encoder.SetIndent("", "  ")
+		if err := encoder.Encode(emojis); err != nil {
+			slog.Error("failed to write index.json", "error", err)
+			return err
+		}
+		slog.Info("saved emoji index", "path", filepath.Join(instance, "index.json"))
+	}
+
 	slog.Info(fmt.Sprintf("Completed! Downloaded %d emojis", totalCount))
 	return nil
 }
