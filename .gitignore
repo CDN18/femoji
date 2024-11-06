@@ -2,3 +2,4 @@
 dist
 release.ps1
 release.sh
+.DS_Store
