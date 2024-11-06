@@ -15,7 +15,58 @@ import (
 	"github.com/owu-one/gotosocial-sdk/models"
 )
 
-func Download(authClient *auth.Client, instance string, category string, override bool) error {
+type MisskeyResponse struct {
+	Emojis []MisskeyEmoji `json:"emojis"`
+}
+
+type MisskeyEmoji struct {
+	Aliases   []string `json:"aliases"`
+	Name      string   `json:"name"`
+	Category  *string  `json:"category"`
+	URL       string   `json:"url"`
+	LocalOnly bool     `json:"localOnly"`
+	Sensitive bool     `json:"isSensitive"`
+	RoleIds   []string `json:"roleIdsThatCanBeUsedThisEmojiAsReaction"`
+}
+
+var mastodonLike = []string{"mastodon", "gotosocial", "pleroma", "akkoma", "hometown"}
+var misskeyLike = []string{"misskey", "firefish", "iceshrimp", "sharkey", "catodon", "foundkey"}
+
+func Download(authClient *auth.Client, instance string, category string, override bool, instanceType string) error {
+	if instance != "DEFAULT" {
+		if instanceType == "mastodon" {
+			nodeinfo, err := util.GetNodeInfo(instance)
+			if err != nil {
+				return err
+			}
+
+			isMastodon := false
+			isMisskey := false
+
+			for _, name := range mastodonLike {
+				if nodeinfo.Software.Name == name {
+					isMastodon = true
+					break
+				}
+			}
+
+			for _, name := range misskeyLike {
+				if nodeinfo.Software.Name == name {
+					isMisskey = true
+					break
+				}
+			}
+
+			if isMisskey {
+				instanceType = "misskey"
+			} else if !isMastodon {
+				return fmt.Errorf("unknown instance type: %s", nodeinfo.Software.Name)
+			}
+		} else if instanceType != "misskey" {
+			return fmt.Errorf("invalid instance type: %s", instanceType)
+		}
+	}
+
 	var emojis []*models.Emoji
 	if instance == "DEFAULT" {
 		emojiResp, err := authClient.Client.CustomEmojis.CustomEmojisGet(nil, authClient.Auth)
@@ -23,7 +74,7 @@ func Download(authClient *auth.Client, instance string, category string, overrid
 			return err
 		}
 		emojis = emojiResp.GetPayload()
-	} else {
+	} else if instanceType == "mastodon" {
 		endpoint := fmt.Sprintf("https://%s/api/v1/custom_emojis", instance)
 		resp, err := http.Get(endpoint)
 		if err != nil {
@@ -41,7 +92,43 @@ func Download(authClient *auth.Client, instance string, category string, overrid
 		if err := json.Unmarshal(body, &emojis); err != nil {
 			return err
 		}
+	} else {
+		endpoint := fmt.Sprintf("https://%s/api/emojis", instance)
+		resp, err := http.Get(endpoint)
+		if err != nil {
+			return err
+		}
+		defer resp.Body.Close()
+
+		if resp.StatusCode != http.StatusOK {
+			slog.Error("failed to get misskey emojis", "status", resp.StatusCode, "instance", instance)
+			return nil
+		}
+
+		body, err := io.ReadAll(resp.Body)
+		if err != nil {
+			return err
+		}
+
+		var misskeyResp MisskeyResponse
+		if err := json.Unmarshal(body, &misskeyResp); err != nil {
+			return err
+		}
+
+		for _, me := range misskeyResp.Emojis {
+			category := "uncategorized"
+			if me.Category != nil {
+				category = *me.Category
+			}
+
+			emojis = append(emojis, &models.Emoji{
+				Category:  category,
+				Shortcode: me.Name,
+				URL:       me.URL,
+			})
+		}
 	}
+
 	if category != "*" {
 		emojis, _ = util.FilterEmojisByCategory(emojis, category)
 	}
